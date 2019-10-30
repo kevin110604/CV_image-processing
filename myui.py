@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(830, 600)
+        MainWindow.resize(830, 852)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.okButton = QtWidgets.QPushButton(self.centralwidget)
@@ -76,6 +76,9 @@ class Ui_MainWindow(object):
         self.pushButton44 = QtWidgets.QPushButton(self.groupBox_6)
         self.pushButton44.setGeometry(QtCore.QRect(30, 320, 113, 32))
         self.pushButton44.setObjectName("pushButton44")
+        self.label = QtWidgets.QLabel(self.centralwidget)
+        self.label.setGeometry(QtCore.QRect(60, 500, 481, 281))
+        self.label.setObjectName("label")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 830, 22))
@@ -111,3 +114,4 @@ class Ui_MainWindow(object):
         self.pushButton42.setText(_translate("MainWindow", "PushButton"))
         self.pushButton43.setText(_translate("MainWindow", "PushButton"))
         self.pushButton44.setText(_translate("MainWindow", "PushButton"))
+        self.label.setText(_translate("MainWindow", "TextLabel"))
