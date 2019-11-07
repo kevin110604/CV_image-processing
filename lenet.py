@@ -9,34 +9,39 @@ import struct
 import numpy as np
 
 # LeNet-5
-# 1st layer: Convolution 1
-# 2nd layer: Subsampling 1
-# 3rd layer: Convolution 2
-# 4th layer: Subsampling 2
-# 5th layer: Full connection 1
-# 6th layer: Full connection 2
-# 7th layer: Gaussian connection
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         # Applies a 2D convolution over an input signal composed of several input planes
         # (in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
-        self.conv1 = nn.Conv2d(1, 20, 5, 1)
-        self.conv2 = nn.Conv2d(20, 50, 5, 1)
+        self.conv1 = nn.Conv2d(1, 6, 5, 1, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5, 1)
         # Applies a linear transformation to the incoming data: y = xA^T + b
         # (in_features, out_features, bias=True)
-        self.fc1 = nn.Linear(4*4*50, 500)
-        self.fc2 = nn.Linear(500, 10)
+        self.fc1 = nn.Linear(16*5*5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc  = nn.Linear(84, 10)
     def forward(self, x):
+        # 1st layer: Convolution 1
+        # Applies the rectified linear unit function element-wise, return type: tensor
         # (input, inplace=False)
         x = F.relu(self.conv1(x))
+        # 2nd layer: Subsampling 1
         # (kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False)
         x = F.max_pool2d(x, 2, 2)
+        # 3rd layer: Convolution 2
         x = F.relu(self.conv2(x))
+        # 4th layer: Subsampling 2
         x = F.max_pool2d(x, 2, 2)
-        x = x.view(-1, 4*4*50)
+        # Returns a new tensor with the same data as the `self` tensor but of a different `shape`
+        # the size -1 is inferred from other dimensions
+        x = x.view(x.shape[0], x.shape[1]*x.shape[2]*x.shape[3])
+        # 5th layer: Full connection 1
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        # 6th layer: Full connection 2
+        x = F.relu(self.fc2(x))
+        # 7th layer: Gaussian connection
+        x = self.fc(x)
         # Applies a softmax followed by a logarithm
         # (input, dim=None, _stacklevel=3, dtype=None)
         return F.log_softmax(x, dim=1)
@@ -54,6 +59,7 @@ class Hyper():
 
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
+    loss_list = []
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -62,9 +68,11 @@ def train(args, model, device, train_loader, optimizer, epoch):
         loss.backward()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
+            # loss_list.append(loss.item())
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
+    # print(loss_list)
 
 def test(args, model, device, test_loader, train_set=False):
     model.eval()
@@ -94,8 +102,10 @@ def read_idx(filename):
         return np.fromstring(f.read(), dtype=np.uint8).reshape(shape)
 
 def main():
-    imgs = read_idx('MNIST/train-images-idx3-ubyte')
-    labels = read_idx('MNIST/train-labels-idx1-ubyte')
+    train_imgs = read_idx('MNIST/train-images-idx3-ubyte')
+    train_labels = read_idx('MNIST/train-labels-idx1-ubyte')
+    test_imgs = read_idx('MNIST/t10k-images-idx3-ubyte')
+    test_labels = read_idx('MNIST/t10k-labels-idx1-ubyte')
 
     args = Hyper()
     device = torch.device('cpu')
@@ -112,6 +122,12 @@ def main():
                            transforms.Normalize((0.1307,), (0.3081,))
                        ])),
         batch_size=args.test_batch_size, shuffle=True)
+    # print(train_loader)
+    # train_loaderr = [train_imgs, train_labels]
+    # test_loaderr = [test_imgs, test_labels]
+    # train_loader = torch.utils.data.DataLoader(train_loaderr, batch_size=args.batch_size)
+    # test_loader = torch.utils.data.DataLoader(test_loaderr, batch_size=args.test_batch_size)
+    # print('OK')
     
     # Construct the model
     model = Net().to(device)
@@ -122,14 +138,20 @@ def main():
     # Train
     training_loss = []
     training_accuracy = []
+    test_loss = []
+    test_accuracy = []
     for epoch in range(1, args.epoch + 1):
         train(args, model, device, train_loader, optimizer, epoch)
         loss, accuracy = test(args, model, device, test_loader, train_set=True)
         training_loss.append(loss)
         training_accuracy.append(accuracy)
-        test(args, model, device, test_loader)
+        loss, accuracy = test(args, model, device, test_loader)
+        test_loss.append(loss)
+        test_accuracy.append(accuracy)
     print(training_loss)
     print(training_accuracy)
+    print(test_loss)
+    print(test_accuracy)
 
     if args.save_model:
         torch.save(model.state_dict(), 'mnist_cnn.pt')
