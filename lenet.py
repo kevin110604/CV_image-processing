@@ -14,7 +14,7 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # Applies a 2D convolution over an input signal composed of several input planes
         # (in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
-        self.conv1 = nn.Conv2d(1, 6, 5, 1, 2)
+        self.conv1 = nn.Conv2d(1, 6, 5, 1, padding=2)
         self.conv2 = nn.Conv2d(6, 16, 5, 1)
         # Applies a linear transformation to the incoming data: y = xA^T + b
         # (in_features, out_features, bias=True)
@@ -61,6 +61,8 @@ def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
     loss_list = []
     for batch_idx, (data, target) in enumerate(train_loader):
+        # print(data.shape)
+        # print(target.shape)
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -128,6 +130,15 @@ def main():
     # train_loader = torch.utils.data.DataLoader(train_loaderr, batch_size=args.batch_size)
     # test_loader = torch.utils.data.DataLoader(test_loaderr, batch_size=args.test_batch_size)
     # print('OK')
+
+    # train_imgs = np.reshape(train_imgs, (60000, 1, 28, 28))
+    # train_labels = np.reshape(train_labels, (60000, 1, 1, 1))
+    # tensor_x = torch.stack([torch.Tensor(i) for i in train_imgs]) # transform to torch tensors
+    # tensor_y = torch.stack([torch.Tensor(i) for i in train_labels])
+    # # create your datset
+    # my_dataset = torch.utils.data.TensorDataset(tensor_x, tensor_y) 
+    # # create your dataloader
+    # train_loader = torch.utils.data.DataLoader(my_dataset, batch_size=args.test_batch_size, shuffle=True) 
     
     # Construct the model
     model = Net().to(device)

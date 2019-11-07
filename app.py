@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -9,6 +10,12 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import Qt
 from myui import Ui_MainWindow    # my own ui
+import argparse
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from torchvision import datasets, transforms
 
 class AppWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -115,7 +122,8 @@ class AppWindow(QtWidgets.QMainWindow):
     def pushButton52_Click(self):
         print('hyperparameters:\n', 'batch size: 32\n', 'learning rate: 0.001\n', 'optimizer: SGD\n')
     def pushButton53_Click(self):
-        epoch_one_loss = [2.309455156326294, 2.3062610626220703, 2.311551570892334, 2.315929412841797, 2.2834324836730957, 2.2850048542022705, 2.3059277534484863, 2.2876811027526855, 2.2965619564056396, 2.2940359115600586, 2.295682191848755, 2.303783893585205, 2.290196418762207, 2.30722713470459, 2.2812552452087402, 2.2965731620788574, 2.3022544384002686, 2.289139747619629, 2.304690361022949, 2.2859506607055664, 2.2633657455444336, 2.286907434463501, 2.2947187423706055, 2.275141477584839, 2.301710844039917, 2.2854249477386475, 2.2925031185150146, 2.2961442470550537, 2.2831716537475586, 2.292861223220825, 2.2766053676605225, 2.272902727127075, 2.28235125541687, 2.284325361251831, 2.281475067138672, 2.2834293842315674, 2.270029306411743, 2.286776304244995, 2.2946484088897705, 2.2710461616516113, 2.272761106491089, 2.264686346054077, 2.2894394397735596, 2.2731611728668213, 2.2476541996002197, 2.253422975540161, 2.26839280128479, 2.2898435592651367, 2.278592348098755, 2.256791830062866, 2.2679340839385986, 2.263166904449463, 2.2556607723236084, 2.2438607215881348, 2.2598164081573486, 2.271494150161743, 2.285444498062134, 2.246676445007324, 2.279439926147461, 2.273203134536743, 2.261751890182495, 2.2644765377044678, 2.2566354274749756, 2.2542269229888916, 2.279810905456543, 2.2486491203308105, 2.2207255363464355, 2.242825508117676, 2.237362861633301, 2.2534162998199463, 2.213463068008423, 2.2382867336273193, 2.2582690715789795, 2.240208148956299, 2.2261269092559814, 2.2483744621276855, 2.2314064502716064, 2.246098756790161, 2.22929048538208, 2.2364859580993652, 2.2492496967315674, 2.213142156600952, 2.2227938175201416, 2.2606594562530518, 2.1991512775421143, 2.2027816772460938, 2.1827316284179688, 2.18540358543396, 2.208200216293335, 2.1990227699279785, 2.206076145172119, 2.175732135772705, 2.17747163772583, 2.1957101821899414, 2.193697214126587, 2.14681077003479, 2.144404411315918, 2.1560916900634766, 2.140204429626465, 2.1605851650238037, 2.201467990875244, 2.189659595489502, 2.1366546154022217, 2.153390884399414, 2.151458501815796, 2.1380319595336914, 2.13814377784729, 2.142993211746216, 2.0918402671813965, 2.0699572563171387, 2.0815043449401855, 2.0996556282043457, 2.0166423320770264, 2.05517578125, 2.0604772567749023, 1.974403738975525, 1.943175196647644, 2.0825843811035156, 1.9514628648757935, 1.949338674545288, 1.981993556022644, 1.9919061660766602, 1.9655207395553589, 1.8776007890701294, 1.8532859086990356, 1.8786648511886597, 1.762534260749817, 1.7784790992736816, 1.6647239923477173, 1.676282286643982, 1.6260868310928345, 1.7585138082504272, 1.6866481304168701, 1.560402512550354, 1.7500180006027222, 1.5180578231811523, 1.5897576808929443, 1.4741287231445312, 1.561781644821167, 1.5610910654067993, 1.506373643875122, 1.4053910970687866, 1.4619410037994385, 1.4621139764785767, 1.6361875534057617, 1.3169102668762207, 1.2338606119155884, 1.3469363451004028, 1.296148419380188, 1.20128333568573, 1.1116793155670166, 1.2783265113830566, 1.1320661306381226, 0.8281052708625793, 1.119053840637207, 0.8666683435440063, 1.0954885482788086, 0.8763176798820496, 0.8308529853820801, 1.180712342262268, 0.9195947647094727, 0.7004604339599609, 1.0001665353775024, 1.2512567043304443, 0.8469095230102539, 0.7034301161766052, 0.7451775670051575, 0.7977430820465088, 0.6876488327980042, 0.8754898905754089, 0.8450217247009277, 0.7580893039703369, 0.878572940826416, 0.6266390085220337, 0.5611291527748108, 0.6620399355888367, 0.6565808057785034, 0.42689982056617737, 0.8784221410751343, 0.5873407125473022, 0.8570502400398254, 0.5374785661697388, 0.6382054686546326, 0.832611083984375, 0.5627081990242004, 0.7495489716529846, 0.604522705078125, 0.7980763912200928]
+        epoch_one_loss = lenet_main()
+        # epoch_one_loss = [2.309455156326294, 2.3062610626220703, 2.311551570892334, 2.315929412841797, 2.2834324836730957, 2.2850048542022705, 2.3059277534484863, 2.2876811027526855, 2.2965619564056396, 2.2940359115600586, 2.295682191848755, 2.303783893585205, 2.290196418762207, 2.30722713470459, 2.2812552452087402, 2.2965731620788574, 2.3022544384002686, 2.289139747619629, 2.304690361022949, 2.2859506607055664, 2.2633657455444336, 2.286907434463501, 2.2947187423706055, 2.275141477584839, 2.301710844039917, 2.2854249477386475, 2.2925031185150146, 2.2961442470550537, 2.2831716537475586, 2.292861223220825, 2.2766053676605225, 2.272902727127075, 2.28235125541687, 2.284325361251831, 2.281475067138672, 2.2834293842315674, 2.270029306411743, 2.286776304244995, 2.2946484088897705, 2.2710461616516113, 2.272761106491089, 2.264686346054077, 2.2894394397735596, 2.2731611728668213, 2.2476541996002197, 2.253422975540161, 2.26839280128479, 2.2898435592651367, 2.278592348098755, 2.256791830062866, 2.2679340839385986, 2.263166904449463, 2.2556607723236084, 2.2438607215881348, 2.2598164081573486, 2.271494150161743, 2.285444498062134, 2.246676445007324, 2.279439926147461, 2.273203134536743, 2.261751890182495, 2.2644765377044678, 2.2566354274749756, 2.2542269229888916, 2.279810905456543, 2.2486491203308105, 2.2207255363464355, 2.242825508117676, 2.237362861633301, 2.2534162998199463, 2.213463068008423, 2.2382867336273193, 2.2582690715789795, 2.240208148956299, 2.2261269092559814, 2.2483744621276855, 2.2314064502716064, 2.246098756790161, 2.22929048538208, 2.2364859580993652, 2.2492496967315674, 2.213142156600952, 2.2227938175201416, 2.2606594562530518, 2.1991512775421143, 2.2027816772460938, 2.1827316284179688, 2.18540358543396, 2.208200216293335, 2.1990227699279785, 2.206076145172119, 2.175732135772705, 2.17747163772583, 2.1957101821899414, 2.193697214126587, 2.14681077003479, 2.144404411315918, 2.1560916900634766, 2.140204429626465, 2.1605851650238037, 2.201467990875244, 2.189659595489502, 2.1366546154022217, 2.153390884399414, 2.151458501815796, 2.1380319595336914, 2.13814377784729, 2.142993211746216, 2.0918402671813965, 2.0699572563171387, 2.0815043449401855, 2.0996556282043457, 2.0166423320770264, 2.05517578125, 2.0604772567749023, 1.974403738975525, 1.943175196647644, 2.0825843811035156, 1.9514628648757935, 1.949338674545288, 1.981993556022644, 1.9919061660766602, 1.9655207395553589, 1.8776007890701294, 1.8532859086990356, 1.8786648511886597, 1.762534260749817, 1.7784790992736816, 1.6647239923477173, 1.676282286643982, 1.6260868310928345, 1.7585138082504272, 1.6866481304168701, 1.560402512550354, 1.7500180006027222, 1.5180578231811523, 1.5897576808929443, 1.4741287231445312, 1.561781644821167, 1.5610910654067993, 1.506373643875122, 1.4053910970687866, 1.4619410037994385, 1.4621139764785767, 1.6361875534057617, 1.3169102668762207, 1.2338606119155884, 1.3469363451004028, 1.296148419380188, 1.20128333568573, 1.1116793155670166, 1.2783265113830566, 1.1320661306381226, 0.8281052708625793, 1.119053840637207, 0.8666683435440063, 1.0954885482788086, 0.8763176798820496, 0.8308529853820801, 1.180712342262268, 0.9195947647094727, 0.7004604339599609, 1.0001665353775024, 1.2512567043304443, 0.8469095230102539, 0.7034301161766052, 0.7451775670051575, 0.7977430820465088, 0.6876488327980042, 0.8754898905754089, 0.8450217247009277, 0.7580893039703369, 0.878572940826416, 0.6266390085220337, 0.5611291527748108, 0.6620399355888367, 0.6565808057785034, 0.42689982056617737, 0.8784221410751343, 0.5873407125473022, 0.8570502400398254, 0.5374785661697388, 0.6382054686546326, 0.832611083984375, 0.5627081990242004, 0.7495489716529846, 0.604522705078125, 0.7980763912200928]
         plt.plot(np.arange(1, len(epoch_one_loss)+1), epoch_one_loss)
         plt.xlabel('iteration')
         plt.ylabel('loss')
@@ -124,12 +132,14 @@ class AppWindow(QtWidgets.QMainWindow):
     def pushButton54_Click(self):
         training_loss = [0.27801019916534425, 0.1734770780324936, 0.12968837683051826, 0.11358276097178459, 0.08707914708256721, 0.07974489688128233, 0.06884555751830339, 0.06906814941316843, 0.0585213128298521, 0.05707976774200797, 0.051379289422556755, 0.04646936908680946, 0.04473398478664458, 0.04289475942216814, 0.043769344283267855, 0.05045518733784556, 0.038426468900218606, 0.03774076570998877, 0.03762611748250201, 0.03744259775523096, 0.0373833829022944, 0.03380541289802641, 0.032416088775265965, 0.03376530309477821, 0.032799575563333926, 0.032588873401004824, 0.03072367932954803, 0.0316964941451326, 0.030654475525394083, 0.030864385814219714, 0.02960870247525163, 0.0316222756926436, 0.03202091944692657, 0.029201694820681585, 0.032917821321217344, 0.03093822462717071, 0.027923995987838134, 0.029558965652040206, 0.027755297914985568, 0.02804889254262671, 0.02715451499344781, 0.026969457214372234, 0.02525769136203453, 0.026984780780551956, 0.02628664475143887, 0.029654834644298536, 0.028099226865405218, 0.027231024555303157, 0.027102080394513905, 0.026225816565332936]
         training_accuracy =  [92.16, 94.85, 96.29, 96.56, 97.3, 97.64, 98.03, 97.97, 98.23, 98.13, 98.47, 98.59, 98.6, 98.66, 98.61, 98.46, 98.74, 98.79, 98.77, 98.75, 98.85, 98.87, 98.9, 98.87, 98.88, 98.91, 98.99, 98.93, 98.96, 98.91, 99.02, 98.95, 98.99, 99.05, 98.92, 99.0, 98.99, 99.03, 99.02, 99.07, 99.1, 99.05, 99.1, 99.04, 99.09, 99.09, 99.05, 99.02, 99.05, 99.08]
+        test_accuracy = [79.87, 91.57, 94.11, 95.13, 96.07, 96.91, 97.11, 97.54, 97.6, 97.86, 97.61, 97.87, 98.01, 97.95, 98.22, 98.08, 98.39, 98.39, 98.39, 98.46, 98.51, 98.44, 98.41, 98.55, 98.6, 98.59, 98.55, 98.62, 98.69, 98.64, 98.58, 98.57, 98.65, 98.72, 98.74, 98.7, 98.73, 98.52, 98.78, 98.65, 98.71, 98.65, 98.56, 98.75, 98.64, 98.84, 98.7, 98.71, 98.79, 98.74]
         plt.plot(np.arange(1, 51), training_loss, label='training')
         plt.xlabel('epoch')
         plt.title('Loss')
         plt.legend()
         plt.show()
         plt.plot(np.arange(1, 51), training_accuracy, label='training')
+        plt.plot(np.arange(1, 51), test_accuracy, label='test')
         plt.xlabel('epoch')
         plt.title('Accurarcy')
         plt.legend()
@@ -137,8 +147,9 @@ class AppWindow(QtWidgets.QMainWindow):
     def pushButton55_Click(self):
         self.popup = AppPopup()
         index = int(self.ui.lineEdit551.text())
-        self.popup.inference(index)
+        self.popup.show_inference(index)
         self.popup.showgrayImg()
+        self.popup.inference(index)
 
 class AppPopup(QtWidgets.QWidget):
     def __init__(self, choice=0):
@@ -333,15 +344,161 @@ class AppPopup(QtWidgets.QWidget):
             # Set label
             self.label[i].setGeometry(i*30, 20, width, height)
             self.label[i].setText(str(labels[index]))
-    def inference(self, index):
+    def show_inference(self, index):
         imgs = read_idx('MNIST/t10k-images-idx3-ubyte')
         self.img = imgs[index]
+    def inference(self, index):
+        #device = torch.device('cpu')
+        model = Net()
+        model.load_state_dict(torch.load('mnist_cnn.pt'))
+        model.eval()
+        data = np.reshape(self.img, (1, 1, 28, 28))
+        data = torch.tensor(data)
+        #data = data.to(device)
+        result = model(data.float())
+        result = model(data.float())
+        data = result[0] - min(result[0])
+        softmax = F.softmax(data,dim=0)
+        L = softmax.data.numpy()
+        plt.bar(np.arange(0, 10), L)
+        plt.show()
 
 def read_idx(filename):
     with open(filename, 'rb') as f:
         zero, data_type, dims = struct.unpack('>HBB', f.read(4))
         shape = tuple(struct.unpack('>I', f.read(4))[0] for d in range(dims))
         return np.fromstring(f.read(), dtype=np.uint8).reshape(shape)
+
+# LeNet-5
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        # Applies a 2D convolution over an input signal composed of several input planes
+        # (in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
+        self.conv1 = nn.Conv2d(1, 6, 5, 1, padding=2)
+        self.conv2 = nn.Conv2d(6, 16, 5, 1)
+        # Applies a linear transformation to the incoming data: y = xA^T + b
+        # (in_features, out_features, bias=True)
+        self.fc1 = nn.Linear(16*5*5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc  = nn.Linear(84, 10)
+    def forward(self, x):
+        # 1st layer: Convolution 1
+        # Applies the rectified linear unit function element-wise, return type: tensor
+        # (input, inplace=False)
+        x = F.relu(self.conv1(x))
+        # 2nd layer: Subsampling 1
+        # (kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False)
+        x = F.max_pool2d(x, 2, 2)
+        # 3rd layer: Convolution 2
+        x = F.relu(self.conv2(x))
+        # 4th layer: Subsampling 2
+        x = F.max_pool2d(x, 2, 2)
+        # Returns a new tensor with the same data as the `self` tensor but of a different `shape`
+        # the size -1 is inferred from other dimensions
+        x = x.view(x.shape[0], x.shape[1]*x.shape[2]*x.shape[3])
+        # 5th layer: Full connection 1
+        x = F.relu(self.fc1(x))
+        # 6th layer: Full connection 2
+        x = F.relu(self.fc2(x))
+        # 7th layer: Gaussian connection
+        x = self.fc(x)
+        # Applies a softmax followed by a logarithm
+        # (input, dim=None, _stacklevel=3, dtype=None)
+        return F.log_softmax(x, dim=1)
+
+# Hyperperamaters for training
+class Hyper():
+    def __init__(self):
+        self.log_interval = 10
+        self.lr = 0.001
+        self.momentum = 0.5
+        self.batch_size = 32
+        self.test_batch_size = 32
+        self.epoch = 1
+        self.save_model = 1
+
+def train(args, model, device, train_loader, optimizer, epoch):
+    model.train()
+    loss_list = []
+    for batch_idx, (data, target) in enumerate(train_loader):
+        # print(data.shape)
+        # print(target.shape)
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = F.nll_loss(output, target)
+        loss.backward()
+        optimizer.step()
+        if batch_idx % args.log_interval == 0:
+            loss_list.append(loss.item())
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                100. * batch_idx / len(train_loader), loss.item()))
+    return loss_list
+
+def test(args, model, device, test_loader, train_set=False):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+            correct += pred.eq(target.view_as(pred)).sum().item()
+    test_loss /= len(test_loader.dataset)
+    accuracy = 100. * correct / len(test_loader.dataset)
+    if train_set:
+        print('\nTraining set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            test_loss, correct, len(test_loader.dataset), accuracy))
+    else: 
+        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            test_loss, correct, len(test_loader.dataset), accuracy))
+    return test_loss, accuracy
+
+def lenet_main():
+    args = Hyper()
+    device = torch.device('cpu')
+    train_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('data', train=True, download=True,
+                       transform=transforms.Compose([
+                           transforms.ToTensor(),
+                           transforms.Normalize((0.1307,), (0.3081,))
+                       ])),
+        batch_size=args.batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('data', train=False, transform=transforms.Compose([
+                           transforms.ToTensor(),
+                           transforms.Normalize((0.1307,), (0.3081,))
+                       ])),
+        batch_size=args.test_batch_size, shuffle=True)
+    
+    # Construct the model
+    model = Net().to(device)
+    # Implements stochastic gradient descent (optionally with momentum)
+    # (params, lr=<required parameter>, momentum=0, dampening=0, weight_decay=0, nesterov=False)
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+
+    # Train
+    training_loss = []
+    training_accuracy = []
+    test_loss = []
+    test_accuracy = []
+    for epoch in range(1, args.epoch + 1):
+        loss_list = train(args, model, device, train_loader, optimizer, epoch)
+        loss, accuracy = test(args, model, device, test_loader, train_set=True)
+        training_loss.append(loss)
+        training_accuracy.append(accuracy)
+        loss, accuracy = test(args, model, device, test_loader)
+        test_loss.append(loss)
+        test_accuracy.append(accuracy)
+    # print(training_loss)
+    # print(training_accuracy)
+    # print(test_loss)
+    # print(test_accuracy)
+    return loss_list
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
