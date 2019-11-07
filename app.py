@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import sys
+import struct
+import random
 from scipy import signal
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QImage, QPixmap
@@ -13,7 +15,7 @@ class AppWindow(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        # connection btw event & function
+        # Connection btw event & function
         self.ui.pushButton11.clicked.connect(self.pushButton11_Click)
         self.ui.pushButton12.clicked.connect(self.pushButton12_Click)
         self.ui.pushButton13.clicked.connect(self.pushButton13_Click)
@@ -26,6 +28,11 @@ class AppWindow(QtWidgets.QMainWindow):
         self.ui.pushButton42.clicked.connect(self.pushButton42_Click)
         self.ui.pushButton43.clicked.connect(self.pushButton43_Click)
         self.ui.pushButton44.clicked.connect(self.pushButton44_Click)
+        self.ui.pushButton51.clicked.connect(self.pushButton51_Click)
+        self.ui.pushButton52.clicked.connect(self.pushButton52_Click)
+        self.ui.pushButton53.clicked.connect(self.pushButton53_Click)
+        self.ui.pushButton54.clicked.connect(self.pushButton54_Click)
+        self.ui.pushButton55.clicked.connect(self.pushButton55_Click)
         self.show()
     def pushButton11_Click(self):
         self.popup = AppPopup()
@@ -102,6 +109,20 @@ class AppWindow(QtWidgets.QMainWindow):
         self.popup.magnitude()
         self.popup.showgrayImg()
         self.popup.show()
+    def pushButton51_Click(self):
+        self.popup = AppPopup(2)
+        self.popup.show_train_img()
+    def pushButton52_Click(self):
+        print('hyperparameters:\n', 'batch size: 32\n', 'learning rate: 0.001\n', 'optimizer: SGD\n')
+    def pushButton53_Click(self):
+        self.popup = AppPopup()
+    def pushButton54_Click(self):
+        self.popup = AppPopup()
+    def pushButton55_Click(self):
+        self.popup = AppPopup()
+        index = int(self.ui.lineEdit551.text())
+        self.popup.inference(index)
+        self.popup.showgrayImg()
 
 class AppPopup(QtWidgets.QWidget):
     def __init__(self, choice=0):
@@ -109,14 +130,22 @@ class AppPopup(QtWidgets.QWidget):
         self.initUI(choice)
         self.show()
     def initUI(self, choice):
-        self.label = QtWidgets.QLabel('', self)
-        if choice == 1:
+        if choice == 0:
+            self.label = QtWidgets.QLabel('', self)
+        elif choice == 1:
+            self.label = QtWidgets.QLabel('', self)
             self.sl = QtWidgets.QSlider(self)
             self.sl.setGeometry(QtCore.QRect(0, 0, 160, 22))
             self.sl.setMaximum(100)
             self.sl.setProperty('value', 0)
             self.sl.setOrientation(QtCore.Qt.Horizontal)
             self.sl.valueChanged.connect(self.blend) 
+        elif choice == 2:
+            self.label_pic = []
+            self.label = []
+            for i in range(10):
+                self.label_pic.append(QtWidgets.QLabel('', self))
+                self.label.append(QtWidgets.QLabel('', self))
     def showImg(self):
         # Change opencv's image to Qimage
         height, width, channel = self.img.shape
@@ -273,6 +302,30 @@ class AppPopup(QtWidgets.QWidget):
         self.img -= self.img.min()
         self.img *= 255.0 / self.img.max()
         self.img = self.img.astype(np.uint8)
+    def show_train_img(self):
+        imgs = read_idx('MNIST/train-images-idx3-ubyte')
+        labels = read_idx('MNIST/train-labels-idx1-ubyte')
+        for i in range(0, 10):
+            index = random.randint(0, 60000)
+            self.img = imgs[index]
+            # Change opencv's image to Qimage
+            height, width = self.img.shape
+            self.qImg = QImage(self.img.data, width, height, width, QImage.Format_Grayscale8).rgbSwapped()
+            # Show Qimage
+            self.label_pic[i].setGeometry(i*30, 0, width, height)
+            self.label_pic[i].setPixmap(QPixmap.fromImage(self.qImg))
+            # Set label
+            self.label[i].setGeometry(i*30, 20, width, height)
+            self.label[i].setText(str(labels[index]))
+    def inference(self, index):
+        imgs = read_idx('MNIST/t10k-images-idx3-ubyte')
+        self.img = imgs[index]
+
+def read_idx(filename):
+    with open(filename, 'rb') as f:
+        zero, data_type, dims = struct.unpack('>HBB', f.read(4))
+        shape = tuple(struct.unpack('>I', f.read(4))[0] for d in range(dims))
+        return np.fromstring(f.read(), dtype=np.uint8).reshape(shape)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
